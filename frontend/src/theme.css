@@ -1,0 +1,205 @@
+/* ===========================================================
+   TRANSERA GLOBAL THEME
+=========================================================== */
+
+:root{
+
+    --bg:#0E0E0E;
+
+    --sidebar:#141414;
+
+    --card:#1B1B1B;
+
+    --border:#2A2A2A;
+
+    --primary:#F4C542;
+
+    --primaryHover:#FFD95C;
+
+    --text:#FFFFFF;
+
+    --textLight:#CFCFCF;
+
+}
+
+*{
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+    font-family:Inter,"Segoe UI",sans-serif;
+
+}
+
+body{
+
+    background:var(--bg);
+
+    color:var(--text);
+
+    overflow-x:hidden;
+
+}
+
+/* Scrollbar */
+
+::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+::-webkit-scrollbar-track{
+
+    background:#111;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:var(--primary);
+
+    border-radius:20px;
+
+}
+
+/* Card */
+
+.card{
+
+    background:var(--card);
+
+    border:1px solid var(--border);
+
+    border-radius:14px;
+
+    padding:22px;
+
+    transition:.25s;
+
+}
+
+.card:hover{
+
+    border-color:var(--primary);
+
+    transform:translateY(-2px);
+
+}
+
+/* Page */
+
+.page-title{
+
+    font-size:30px;
+
+    font-weight:700;
+
+    color:white;
+
+}
+
+.page-subtitle{
+
+    margin-top:6px;
+
+    color:var(--textLight);
+
+    margin-bottom:25px;
+
+}
+
+/* Buttons */
+
+.MuiButton-contained{
+
+    background:var(--primary)!important;
+
+    color:black!important;
+
+    font-weight:700!important;
+
+    border-radius:10px!important;
+
+}
+
+.MuiButton-contained:hover{
+
+    background:var(--primaryHover)!important;
+
+}
+
+/* Inputs */
+
+.MuiOutlinedInput-root{
+
+    background:#252525!important;
+
+    color:white!important;
+
+    border-radius:10px!important;
+
+}
+
+.MuiInputLabel-root{
+
+    color:#CFCFCF!important;
+
+}
+
+.MuiOutlinedInput-input{
+
+    color:white!important;
+
+}
+
+.MuiOutlinedInput-notchedOutline{
+
+    border-color:#555!important;
+
+}
+
+/* Tables */
+
+.MuiTable-root{
+
+    background:transparent!important;
+
+}
+
+.MuiTableHead-root{
+
+    background:#222!important;
+
+}
+
+.MuiTableCell-head{
+
+    color:var(--primary)!important;
+
+    font-size:15px!important;
+
+    font-weight:bold!important;
+
+}
+
+.MuiTableCell-body{
+
+    color:white!important;
+
+}
+
+/* Dialog */
+
+.MuiDialog-paper{
+
+    background:#1B1B1B!important;
+
+    color:white!important;
+
+    border-radius:14px!important;
+
+}
