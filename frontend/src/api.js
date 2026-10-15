@@ -27,6 +27,8 @@ const api = {
     fcfs: `${BASE_URL}/scheduler/fcfs`,
     runProcess: (processId) =>
     `${BASE_URL}/scheduler/run/${processId}`,
+    completeBurst: (processId) =>
+    `${BASE_URL}/scheduler/complete-burst/${processId}`,
 
     sjf: `${BASE_URL}/scheduler/sjf`,
 

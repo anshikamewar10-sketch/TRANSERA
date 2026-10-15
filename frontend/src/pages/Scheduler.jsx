@@ -152,95 +152,114 @@ catch(error){
     }
 
 }
+
 async function executeNextProcess(queue, index) {
 
+    // All processes have finished CPU scheduling
     if (index >= queue.length) {
 
         setRunning(false);
-
         setRunningProcess(null);
-
+        setReadyQueue([]);
         setProgress(100);
 
         setLogs((prev) => [
-
             ...prev,
-
             "✔ FCFS Scheduling Completed.",
-
-            "⏳ Waiting For Resource Allocation..."
-
+            "⏳ All processes are awaiting resource allocation."
         ]);
 
         return;
-
     }
 
     const process = queue[index];
 
-    const remaining = queue.slice(index + 1);
-
-    setReadyQueue(remaining);
-
-    setRunningProcess(process);
-
-    setProgress(0);
-
     try {
 
-        await fetch(api.runProcess(process.process_id), {
+        // Start process in Oracle first
+        const response = await fetch(
+            api.runProcess(process.process_id),
+            { method: "POST" }
+        );
 
-            method: "POST"
+        const data = await response.json();
 
-        });
+        if (!response.ok || !data.success) {
+            throw new Error(
+                data.message || "Failed to start process."
+            );
+        }
+
+        // Update frontend after backend confirms RUNNING
+        setReadyQueue(queue.slice(index + 1));
+        setRunningProcess(process);
+        setProgress(0);
+
+        setLogs((prev) => [
+            ...prev,
+            `✔ ${process.process_id} Selected by FCFS.`,
+            `✔ ${process.process_id} is RUNNING.`
+        ]);
+
+        // Use actual burst time
+        const burstTime = Math.max(
+            1,
+            Number(process.burst_time) || 5
+        );
+
+        for (let second = 1; second <= burstTime; second++) {
+
+            await new Promise((resolve) =>
+                setTimeout(resolve, 1000)
+            );
+
+            setProgress((second / burstTime) * 100);
+        }
+
+        // Tell Oracle the CPU burst has completed
+        const completeResponse = await fetch(
+            api.completeBurst(process.process_id),
+            { method: "POST" }
+        );
+
+        const completeData = await completeResponse.json();
+
+        if (!completeResponse.ok || !completeData.success) {
+            throw new Error(
+                completeData.message ||
+                "CPU burst completion failed."
+            );
+        }
+
+        setLogs((prev) => [
+            ...prev,
+            `✔ ${process.process_id} CPU Burst Completed.`,
+            `✔ ${process.process_id} moved to AWAITING_RESOURCES.`
+        ]);
+
+        // Clear CPU before starting the next process
+        setRunningProcess(null);
+
+        await new Promise((resolve) =>
+            setTimeout(resolve, 500)
+        );
+
+        // Execute next process in FCFS order
+        await executeNextProcess(queue, index + 1);
 
     } catch (error) {
 
-        console.log(error);
+        console.error("FCFS Error:", error);
 
+        setLogs((prev) => [
+            ...prev,
+            `❌ ${process.process_id}: ${error.message}`
+        ]);
+
+        setRunning(false);
     }
-
-    setLogs((prev) => [
-
-        ...prev,
-
-        `✔ ${process.process_id} Selected by FCFS.`,
-
-        `✔ Executing ${process.process_id}...`
-
-    ]);
-
-    let value = 0;
-
-    const timer = setInterval(() => {
-
-        value += 20;
-
-        setProgress(value);
-
-        if (value >= 100) {
-
-            clearInterval(timer);
-
-            setLogs((prev) => [
-
-                ...prev,
-
-                `✔ ${process.process_id} CPU Burst Completed.`
-
-            ]);
-
-            setTimeout(() => {
-
-                executeNextProcess(queue, index + 1);
-
-            }, 500);
-
-        }
-
-    }, 1000);
-
 }
+
 
   return (
 
