@@ -22,7 +22,7 @@ except Exception:
 # =====================================================
 
 DB_USERNAME = "TRANSERA"
-DB_PASSWORD = "transera"
+DB_PASSWORD = "xyz"
 DB_DSN = "localhost:1521/XE"
 
 
@@ -69,3 +69,12 @@ if __name__ == "__main__":
         connection.close()
 
         print("Connection Closed")
+
+
+
+
+
+
+
+
+

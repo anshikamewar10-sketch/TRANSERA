@@ -28,7 +28,7 @@ class WaitingQueue(ResourceCommon):
             )
         )
 
-        self.connection.commit()
+        
 
         cursor.close()
 

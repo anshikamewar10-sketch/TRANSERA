@@ -15,6 +15,8 @@ from app.api.scheduler import router as scheduler_router
 from app.api.resource import router as resource_router
 from app.api.deadlock import router as deadlock_router
 from app.api.auth import router as auth_router
+from app.api import transactions
+from app.api import analytics
 
 app = FastAPI(
     title="Transera API",
@@ -39,6 +41,8 @@ app.include_router(simulation_router)
 app.include_router(scheduler_router)
 app.include_router(resource_router)
 app.include_router(deadlock_router)
+app.include_router(transactions.router)
+app.include_router(analytics.router)
 
 
 

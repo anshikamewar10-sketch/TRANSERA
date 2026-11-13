@@ -7,7 +7,8 @@ import Simulation from "./pages/Simulation";
 import Scheduler from "./pages/Scheduler";
 import ResourceCenter from "./pages/ResourceCenter";
 import Deadlock from "./pages/Deadlock";
-import ComingSoon from "./pages/ComingSoon";
+import Transactions from "./pages/Transactions";
+import Analytics from "./pages/Analytics";
 
 function App() {
 
@@ -55,22 +56,13 @@ function App() {
         path="/deadlock"
         element={<Deadlock />}
       />
+       
 
-      {/* Coming Soon */}
-
-      <Route
-        path="/transactions"
-        element={<ComingSoon title="Transaction Center" />}
-      />
+     <Route path="/transactions" element={<Transactions />} />
 
       <Route
-        path="/logs"
-        element={<ComingSoon title="System Logs" />}
-      />
-
-      <Route
-        path="/analytics"
-        element={<ComingSoon title="Analytics" />}
+         path="/analytics"
+         element={<Analytics />}
       />
 
       {/* Invalid Route */}

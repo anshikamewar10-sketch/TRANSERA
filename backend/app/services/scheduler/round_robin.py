@@ -1,93 +1,102 @@
+
 """
----------------------------------------------------------
-Round Robin Scheduling Algorithm
----------------------------------------------------------
-Purpose:
-Executes Round Robin Scheduling.
----------------------------------------------------------
+TRANSERA - Round Robin Scheduling
+Arrival-aware, preemptive CPU scheduling.
 """
 
-from app.services.scheduler.common import SchedulerCommon
+from collections import deque
 
 
-class RoundRobin(SchedulerCommon):
+class RoundRobin:
+
+    QUANTUM = 2
 
     def run(self, ready_queue):
 
-        gantt_chart = []
-
-        if len(ready_queue) == 0:
-
+        if not ready_queue:
             return {
                 "success": False,
                 "message": "No READY Processes Found."
             }
 
-        quantum = 2
-
-        queue = ready_queue.copy()
-
-        while len(queue) > 0:
-
-            process = queue.pop(0)
-
-            process_id = process["process_id"]
-
-            burst_time = process["burst_time"]
-
-            self.update_process_state(
-                process_id,
-                "RUNNING"
+        processes = sorted(
+            [dict(p) for p in ready_queue],
+            key=lambda p: (
+                float(p["arrival_time"]),
+                p["process_id"]
             )
+        )
 
-            self.write_log(
-                process_id,
-                "RUNNING",
-                "CPU Allocated"
+        remaining = {
+            p["process_id"]: float(
+                p.get("remaining_burst_time")
+                if p.get("remaining_burst_time") is not None
+                else p["burst_time"]
             )
+            for p in processes
+        }
 
-            if burst_time > quantum:
+        quantum = self.QUANTUM
+        queue = deque()
+        timeline = []
 
-                burst_time -= quantum
+        current_time = float(processes[0]["arrival_time"])
+        next_arrival = 0
 
-                process["burst_time"] = burst_time
+        def enqueue_arrivals():
+            nonlocal next_arrival
 
-                gantt_chart.append(process_id)
+            while (
+                next_arrival < len(processes)
+                and float(
+                    processes[next_arrival]["arrival_time"]
+                ) <= current_time
+            ):
+                queue.append(processes[next_arrival])
+                next_arrival += 1
 
-                self.update_process_state(
-                    process_id,
-                    "READY"
+        enqueue_arrivals()
+
+        while queue or next_arrival < len(processes):
+
+            if not queue:
+                current_time = float(
+                    processes[next_arrival]["arrival_time"]
                 )
+                enqueue_arrivals()
 
-                self.write_log(
-                    process_id,
-                    "CONTEXT_SWITCH",
-                    "Quantum Expired"
-                )
+            process = queue.popleft()
+            pid = process["process_id"]
 
+            duration = min(quantum, remaining[pid])
+
+            start = current_time
+            current_time += duration
+            remaining[pid] -= duration
+
+            enqueue_arrivals()
+
+            completed = remaining[pid] <= 0
+
+            timeline.append({
+                "process_id": pid,
+                "start_time": start,
+                "end_time": current_time,
+                "duration": duration,
+                "remaining_after": max(0, remaining[pid]),
+                "completed": completed
+            })
+
+            if not completed:
                 queue.append(process)
 
-            else:
-
-                self.execute_process(
-                    process_id,
-                    gantt_chart
-                )
-
         return {
-
             "success": True,
-
-            "algorithm": "Round Robin",
-
-            "gantt_chart": gantt_chart,
-
+            "algorithm": "ROUND_ROBIN",
+            "time_quantum": quantum,
+            "ready_queue": processes,
+            "gantt_chart": timeline,
             "running_process": None,
-
-            "ready_queue": [],
-
-            "status": "Scheduling Completed.",
-
-            "message": "Round Robin Scheduling Completed Successfully."
-
+            "status": "Ready For Execution",
+            "message": "Round Robin execution sequence generated."
         }

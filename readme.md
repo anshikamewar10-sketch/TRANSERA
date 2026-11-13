@@ -1,55 +1,113 @@
-http://127.0.0.1:8000/docs
+# TRANSERA
+### Business Execution & System Operations Console
 
+TRANSERA is a full-stack application that integrates **Operating System concepts and Database Management System principles** into a unified business operations platform.
 
+The system demonstrates how business operations are converted into processes, scheduled for CPU execution, allocated resources, checked for deadlocks, and processed through Oracle database transactions.
 
+It also provides an analytics dashboard that displays system performance, resource utilization, transaction reliability, and database integrity.
 
-DELETE FROM TRANSACTION_LOGS;
+## Technology Stack
 
-DELETE FROM TRANSACTIONS;
+**Frontend**
+- React.js
+- Material UI
+- Recharts
+- JavaScript
 
-DELETE FROM SYSTEM_LOGS;
+**Backend**
+- Python
+- FastAPI
+- REST APIs
 
-DELETE FROM RESOURCE_ALLOCATIONS;
+**Database**
+- Oracle Database
+- SQL
+- Database constraints, joins, views, and transaction management
 
-DELETE FROM PROCESSES;
+## Key Features
 
-UPDATE RESOURCES
-SET AVAILABLE_UNITS = TOTAL_UNITS,
-    RESOURCE_STATUS = 'AVAILABLE';
+### 1. Operation Hub
+Creates and manages business operations, including inventory receipts, sales orders, purchase orders, and other business activities.
 
-UPDATE BUSINESS_OPERATIONS
-SET BUSINESS_STATUS = 'PENDING';
+### 2. Simulation Engine
+Converts pending business operations into operating-system processes and generates process resource requirements.
 
-COMMIT;
+### 3. Execution Scheduler
+Implements four CPU scheduling algorithms:
+- First Come First Serve (FCFS)
+- Shortest Job First (SJF)
+- Priority Scheduling
+- Round Robin
 
+Displays process execution, READY queues, CPU progress, and scheduling timelines.
 
+### 4. Resource Allocation Center
+Manages resource allocation, available resource instances, waiting processes, and allocation history.
 
+### 5. Deadlock Detection & Recovery
+Detects deadlocked processes, supports recovery, releases resources, and allows waiting processes to retry allocation.
 
-SELECT COUNT(*) AS TOTAL_PROCESSES
-FROM PROCESSES;
+### 6. Transaction Center
+Executes Oracle database transactions for eligible completed business operations.
 
-SELECT COUNT(*) AS TOTAL_ALLOCATIONS
-FROM RESOURCE_ALLOCATIONS;
+Supports:
+- Inventory Receipt
+- Sales Order
+- Inventory Audit
+- COMMIT and ROLLBACK
+- Transaction history and audit logs
 
-SELECT COUNT(*) AS TOTAL_SYSTEM_LOGS
-FROM SYSTEM_LOGS;
+### 7. Analytics & Insights
+Provides Oracle SQL-based analytics covering:
+- Business operation completion
+- Process completion
+- Resource utilization
+- Transaction reliability
+- Database integrity
+- System activity
 
-SELECT COUNT(*) AS TOTAL_TRANSACTIONS
-FROM TRANSACTIONS;
+## Application Workflow
 
-SELECT COUNT(*) AS TOTAL_TRANSACTION_LOGS
-FROM TRANSACTION_LOGS;
+Operation Hub → Simulation Engine → Execution Scheduler → Resource Allocation → Deadlock Detection & Recovery → Transaction Center → Analytics & Insights
 
-SELECT OPERATION_ID, BUSINESS_STATUS
-FROM BUSINESS_OPERATIONS
-ORDER BY OPERATION_ID;
+## Database Design
 
-SELECT RESOURCE_ID, RESOURCE_NAME,
-       TOTAL_UNITS, AVAILABLE_UNITS,
-       RESOURCE_STATUS
-FROM RESOURCES
-ORDER BY RESOURCE_ID;
+TRANSERA uses Oracle tables for business operations, processes, resources, allocations, transactions, inventory, and system activity.
 
-SELECT BUSINESS_STATUS, COUNT(*) AS TOTAL
-FROM BUSINESS_OPERATIONS
-GROUP BY BUSINESS_STATUS;
+The database includes primary keys, foreign keys, transaction records, and analytical SQL views.
+
+## Running the Project
+
+### Backend
+
+Install the dependencies from `requirements.txt`, configure the Oracle connection, and start the FastAPI server:
+
+```bash
+uvicorn main:app --reload
+```
+
+API documentation is available at:
+
+`http://127.0.0.1:8000/docs`
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend runs locally using the Vite development server.
+
+## Project Purpose
+
+TRANSERA was developed as an academic project to demonstrate the practical integration of Operating System and DBMS concepts through a full-stack application.
+
+## Future Improvements
+
+- Expanded scheduling performance analytics
+- Enhanced database reporting
+- Additional business transaction types
+- Deployment and multi-user support

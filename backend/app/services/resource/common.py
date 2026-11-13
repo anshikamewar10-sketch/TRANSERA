@@ -95,7 +95,49 @@ class ResourceCommon:
             operation_type,
             []
         )
+    
+    
+    
+    
+    # =====================================================
+    # GET PROCESS RESOURCE REQUIREMENTS
+    # =====================================================
 
+    def get_process_requirements(self, process_id):
+
+        cursor = self.connection.cursor()
+
+        try:
+            cursor.execute("""
+                SELECT
+                    R.RESOURCE_ID,
+                    R.RESOURCE_NAME,
+                    PR.MAX_UNITS
+                FROM PROCESS_RESOURCE_REQUIREMENTS PR
+                JOIN RESOURCES R
+                    ON PR.RESOURCE_ID = R.RESOURCE_ID
+                WHERE PR.PROCESS_ID = :1
+                ORDER BY R.RESOURCE_ID
+            """, (process_id,))
+
+            rows = cursor.fetchall()
+
+            requirements = {}
+
+            for resource_id, resource_name, max_units in rows:
+
+                requirements[resource_id] = {
+                    "resource_name": resource_name,
+                    "max_units": int(max_units)
+                }
+
+            return requirements
+
+        finally:
+            cursor.close()
+    
+    
+    
     # =====================================================
     # GET RESOURCE ID
     # =====================================================
@@ -126,72 +168,83 @@ class ResourceCommon:
 
         return None
     
-        # ==============================================
-    # RELEASE RESOURCES
-    # ==============================================
+       
+
+   
+    # ==========================================
+    # RELEASE RESOURCE INSTANCES
+    # ==========================================
 
     def release_resources(self, process_id):
 
         cursor = self.connection.cursor()
 
-        cursor.execute(
-            """
-            SELECT RESOURCE_ID
-            FROM RESOURCE_ALLOCATIONS
-            WHERE PROCESS_ID = :1
-            AND ALLOCATION_STATUS = 'ALLOCATED'
-            """,
-            (
-                process_id,
-            )
-        )
+        try:
+            cursor.execute("""
+                SELECT
+                    ALLOCATION_ID,
+                    RESOURCE_ID,
+                    ALLOCATED_UNITS
+                FROM RESOURCE_ALLOCATIONS
+                WHERE PROCESS_ID = :1
+                  AND ALLOCATION_STATUS = 'ALLOCATED'
+                FOR UPDATE
+            """, (process_id,))
 
-        resources = cursor.fetchall()
+            allocations = cursor.fetchall()
 
-        for resource in resources:
+            if not allocations:
+                return {
+                    "success": False,
+                    "process_id": process_id,
+                    "message": "No active allocations found."
+                }
 
-            resource_id = resource[0]
+            released = []
 
-            cursor.execute(
-                """
-                UPDATE RESOURCES
-                SET AVAILABLE_UNITS = AVAILABLE_UNITS + 1
-                WHERE RESOURCE_ID = :1
-                """,
-                (
-                    resource_id,
-                )
-            )
-            cursor.execute(
-                """
-                SELECT RESOURCE_NAME
-                FROM RESOURCES
-                WHERE RESOURCE_ID = :1
-                """,
-                (
-                    resource_id,
-                )
-            )
+            for allocation_id, resource_id, units in allocations:
 
-            resource_name = cursor.fetchone()[0]
+                units = int(units)
 
-            self.write_log(
-                process_id,
-                "RESOURCE_RELEASED",
-                f"{resource_name} Released"
-            )
+                cursor.execute("""
+                    UPDATE RESOURCES
+                    SET AVAILABLE_UNITS = AVAILABLE_UNITS + :1
+                    WHERE RESOURCE_ID = :2
+                      AND AVAILABLE_UNITS + :1 <= TOTAL_UNITS
+                """, (units, resource_id))
 
-        cursor.execute(
-            """
-            UPDATE RESOURCE_ALLOCATIONS
-            SET ALLOCATION_STATUS = 'RELEASED'
-            WHERE PROCESS_ID = :1
-            """,
-            (
-                process_id,
-            )
-        )
+                if cursor.rowcount != 1:
+                    raise RuntimeError(
+                        "Resource capacity validation failed."
+                    )
 
-        self.connection.commit()
+                cursor.execute("""
+                    UPDATE RESOURCE_ALLOCATIONS
+                    SET ALLOCATION_STATUS = 'RELEASED'
+                    WHERE ALLOCATION_ID = :1
+                      AND ALLOCATION_STATUS = 'ALLOCATED'
+                """, (allocation_id,))
 
-        cursor.close()
+                if cursor.rowcount != 1:
+                    raise RuntimeError(
+                        "Allocation release update failed."
+                    )
+
+                released.append({
+                    "resource_id": resource_id,
+                    "units_released": units
+                })
+
+            return {
+                "success": True,
+                "process_id": process_id,
+                "released_resources": released,
+                "message": "Resources released successfully."
+            }
+
+        except Exception:
+            self.connection.rollback()
+            raise
+
+        finally:
+            cursor.close()

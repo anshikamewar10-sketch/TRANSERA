@@ -1,28 +1,69 @@
-# Python cache
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Python virtual environment
+# Python Virtual Environments
 venv/
 .venv/
 env/
+ENV/
 
-# Secret/environment files
+# Environment Variables and Secrets
 .env
 .env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+wallet/
+Wallet_*/
+tnsnames.ora
+sqlnet.ora
 
-# Node modules
+# React / Node
 node_modules/
-
-# Frontend build
 dist/
 build/
+coverage/
+.vite/
+*.local
 
-# VS Code
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
 
-# Other unnecessary files
+# Operating System
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Temporary Files
+*.tmp
+*.bak
+*.cache
+
+# Local Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated Artifacts
+*.zip
+*.tar.gz
+*_backup.py

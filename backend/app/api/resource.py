@@ -30,3 +30,18 @@ def allocate_resources():
 def resource_history():
 
     return resource_service.get_resource_history()
+
+from fastapi import HTTPException
+
+@router.post("/release/{process_id}")
+def release_resources(process_id: str):
+
+    result = resource_service.complete_and_release(process_id)
+
+    if not result["success"]:
+        raise HTTPException(
+            status_code=400,
+            detail=result["message"]
+        )
+
+    return result

@@ -73,12 +73,6 @@ function Sidebar() {
     },
 
     {
-      title: "System Logs",
-      icon: <DescriptionIcon />,
-      path: "/logs"
-    },
-
-    {
       title: "Analytics",
       icon: <AnalyticsIcon />,
       path: "/analytics"

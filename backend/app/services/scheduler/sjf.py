@@ -1,59 +1,77 @@
+
 """
----------------------------------------------------------
-SJF Scheduling Algorithm
----------------------------------------------------------
-Purpose:
-Executes Shortest Job First Scheduling.
----------------------------------------------------------
+TRANSERA - Shortest Job First Scheduling
+Non-preemptive, arrival-aware scheduling.
 """
 
-from app.services.scheduler.common import SchedulerCommon
 
-
-class SJF(SchedulerCommon):
+class SJF:
 
     def run(self, ready_queue):
 
-        gantt_chart = []
-
-        if len(ready_queue) == 0:
-
+        if not ready_queue:
             return {
                 "success": False,
                 "message": "No READY Processes Found."
             }
 
-        # ==========================================
-        # SORT BY BURST TIME
-        # ==========================================
+        remaining = [dict(p) for p in ready_queue]
 
-        ready_queue.sort(
-            key=lambda process: process["burst_time"]
+        current_time = min(
+            float(p["arrival_time"]) for p in remaining
         )
 
-        for process in ready_queue:
+        scheduled = []
+        gantt_chart = []
 
-            process_id = process["process_id"]
+        while remaining:
 
-            self.execute_process(
-                process_id,
-                gantt_chart
+            eligible = [
+                p for p in remaining
+                if float(p["arrival_time"]) <= current_time
+            ]
+
+            if not eligible:
+                current_time = min(
+                    float(p["arrival_time"])
+                    for p in remaining
+                )
+
+                eligible = [
+                    p for p in remaining
+                    if float(p["arrival_time"]) <= current_time
+                ]
+
+            process = min(
+                eligible,
+                key=lambda p: (
+                    float(p["burst_time"]),
+                    float(p["arrival_time"]),
+                    p["process_id"]
+                )
             )
 
+            start = current_time
+            duration = float(process["burst_time"])
+            current_time += duration
+
+            scheduled.append(process)
+
+            gantt_chart.append({
+                "process_id": process["process_id"],
+                "start_time": start,
+                "end_time": current_time,
+                "duration": duration
+            })
+
+            remaining.remove(process)
+
         return {
-
             "success": True,
-
             "algorithm": "SJF",
-
             "gantt_chart": gantt_chart,
-
             "running_process": None,
-
-            "ready_queue": [],
-
-            "status": "Scheduling Completed.",
-
-            "message": "SJF Scheduling Completed Successfully."
-
+            "ready_queue": scheduled,
+            "status": "Ready For Execution",
+            "message": "SJF scheduling order generated."
         }

@@ -88,109 +88,77 @@ class DeadlockCommon:
     def maximum_need(self):
 
         return {
-
-            "Inventory Receipt":
-            [
-                "Warehouse Database",
-                "Inventory Database"
-            ],
-
-            "Inventory Dispatch":
-            [
-                "Warehouse Database"
-            ],
-
-            "Warehouse Transfer":
-            [
-                "Warehouse Database",
-                "Inventory Database"
-            ],
-
-            "Supplier Payment":
-            [
-                "Finance Database"
-            ],
-
-            "Invoice Generation":
-            [
-                "Printer",
-                "Invoice Generator"
-            ],
-
-            "Customer Refund":
-            [
-                "Finance Database"
-            ],
-
-            "Inventory Audit":
-            [
-                "Warehouse Database"
-            ],
-
-            "Product Return":
-            [
-                "Inventory Database"
-            ]
-
+            "Inventory Receipt": ["Warehouse Database", "Inventory Database"],
+            "Inventory Dispatch": ["Warehouse Database"],
+            "Warehouse Transfer": ["Warehouse Database", "Inventory Database"],
+            "Supplier Payment": ["Finance Database"],
+            "Invoice Generation": ["Printer", "Invoice Generator"],
+            "Customer Refund": ["Finance Database"],
+            "Inventory Audit": ["Warehouse Database"],
+            "Product Return": ["Inventory Database"],
         }
-        
-        # ==========================================
-    # BUILD MAXIMUM MATRIX
-    # ==========================================
+
+    # =====================================================
+    # BUILD MAXIMUM MATRIX FROM ORACLE
+    # =====================================================
 
     def build_maximum_matrix(self):
 
         cursor = self.connection.cursor()
 
-        cursor.execute("""
-            SELECT
-                P.PROCESS_ID,
-                B.OPERATION_TYPE
-            FROM PROCESSES P
-            JOIN BUSINESS_OPERATIONS B
-            ON P.OPERATION_ID = B.OPERATION_ID
-        """)
+        try:
+            # Load all active processes
+            cursor.execute("""
+                SELECT PROCESS_ID
+                FROM PROCESSES
+                WHERE PROCESS_STATE IN (
+                    'READY',
+                    'RUNNING',
+                    'AWAITING_RESOURCES',
+                    'ALLOCATED',
+                    'WAITING'
+                )
+                ORDER BY PROCESS_ID
+            """)
 
-        processes = cursor.fetchall()
+            processes = [row[0] for row in cursor.fetchall()]
 
-        cursor.execute("""
-            SELECT
-                RESOURCE_ID,
-                RESOURCE_NAME
-            FROM RESOURCES
-        """)
+            maximum = {process_id: {} for process_id in processes}
 
-        resources = cursor.fetchall()
+            # Read maximum resource requirements
+            cursor.execute("""
+    SELECT
+        PR.PROCESS_ID,
+        PR.RESOURCE_ID,
+        PR.MAX_UNITS
+    FROM PROCESS_RESOURCE_REQUIREMENTS PR
+    INNER JOIN PROCESSES P
+        ON PR.PROCESS_ID = P.PROCESS_ID
+    WHERE P.PROCESS_STATE IN (
+        'READY',
+        'RUNNING',
+        'AWAITING_RESOURCES',
+        'ALLOCATED',
+        'WAITING'
+    )
+    ORDER BY PR.PROCESS_ID, PR.RESOURCE_ID
+""")
 
-        cursor.close()
+            for process_id, resource_id, max_units in cursor.fetchall():
 
-        resource_map = {}
+                maximum[process_id][resource_id] = int(max_units)
 
-        for resource_id, resource_name in resources:
+            # Prevent missing requirements from appearing safe
+            missing = [
+                process_id for process_id in processes if not maximum[process_id]
+            ]
 
-            resource_map[resource_name] = resource_id
-
-        operation_mapping = self.maximum_need()
-
-        maximum = {}
-
-        for process_id, operation_type in processes:
-
-            maximum[process_id] = {}
-
-            required = operation_mapping.get(
-                operation_type,
-                []
-            )
-
-            for resource_name in required:
-
-                resource_id = resource_map.get(
-                    resource_name
+            if missing:
+                raise ValueError(
+                    "Missing resource requirements for: " + ", ".join(missing)
                 )
 
-                if resource_id:
+            return maximum
 
-                    maximum[process_id][resource_id] = 1
-
-        return maximum
+        finally:
+            cursor.close()
